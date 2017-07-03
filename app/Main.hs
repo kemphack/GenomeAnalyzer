@@ -11,10 +11,10 @@ data Nucleotide = A | C | T | G deriving (Enum, Eq, Ord, Show)
 type GWord = [Nucleotide]
 
 codeWord :: GWord -> Word16
-codeWord gWord = fromIntegral (sum [4^i * (fromEnum nuc) | (i, nuc) <- zip [0..] gWord])
+codeWord gWord = fromIntegral $ sum [4 ^ i * fromEnum nuc | (i, nuc) <- zip [0..] gWord]
 
 decodeWord :: Word16 -> GWord
-decodeWord word = [toEnum (fromIntegral((div word (4^i)) `mod` 4)) | i <- [0..5]]
+decodeWord word = [toEnum . fromIntegral $ div word (4^i) `mod` 4 | i <- [0..5]]
 
 readNucleotide :: Char -> Maybe Nucleotide
 readNucleotide symbol =
