@@ -1,4 +1,4 @@
-module Main where
+module Main (main) where
 
 import           Data.Vector.Unboxed (Vector)
 import qualified Data.Vector.Unboxed as Vec
@@ -15,9 +15,9 @@ codeWord gWord =
     fromIntegral $
     sum [4 ^ i * fromEnum nuc | (i, nuc) <- zip [0 :: Int ..] gWord]
 
-decodeWord :: Word16 -> GWord
-decodeWord word =
-    [toEnum . fromIntegral $ word `div` 4 ^ i `mod` 4 | i <- [0 .. 5 :: Int]]
+-- decodeWord :: Word16 -> GWord
+-- decodeWord word =
+--     [toEnum . fromIntegral $ word `div` 4 ^ i `mod` 4 | i <- [0 .. 5 :: Int]]
 
 readNucleotide :: Char -> Maybe Nucleotide
 readNucleotide symbol =
@@ -39,9 +39,8 @@ readWord nuclCount file = do
                 Just nucleotide -> do
                     gWord <- readWord (nuclCount - 1) file
                     pure $ nucleotide : gWord
-                Nothing -> do
-                    gWord <- readWord nuclCount file
-                    pure gWord
+                Nothing ->
+                    readWord nuclCount file
     else
         pure []
 
@@ -50,8 +49,7 @@ countWords filepath = do
     genomeHandle <- openFile filepath ReadMode
     _ <- hGetLine genomeHandle
     firstWord <- readWord 6 genomeHandle
-    gWords <- countWord firstWord (Vec.replicate 4096 0) genomeHandle
-    pure gWords
+    countWord firstWord (Vec.replicate 4096 0) genomeHandle
 
 countWord :: GWord -> Vector Word16 -> Handle -> IO (Vector Word16)
 countWord gWord vector handle = do
