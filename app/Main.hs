@@ -2,10 +2,19 @@ module Main where
 
 import System.IO            (IOMode(ReadMode), Handle, openFile, hGetChar, hGetLine, hIsEOF)
 import Data.Map.Strict      (Map, empty, insertWith)
+import Data.Vector.Unboxed  (Vector(..))
+import qualified Data.Vector.Unboxed as Vec
+import Data.Word            (Word16(..))
 
 data Nucleotide = A | C | T | G deriving (Enum, Eq, Ord, Show)
 
 type GWord = [Nucleotide]
+
+codeWord :: GWord -> Word16
+codeWord gWord = fromIntegral (sum [4^i * (fromEnum nuc) | (i, nuc) <- zip [0..] gWord])
+
+decodeWord :: Word16 -> GWord
+decodeWord word = [toEnum (fromIntegral((div word (4^i)) `mod` 4)) | i <- [0..5]]
 
 readNucleotide :: Char -> Maybe Nucleotide
 readNucleotide symbol =
@@ -33,16 +42,16 @@ readWord nuclCount file = do
     else
         pure []
 
-countWords :: FilePath -> IO (Map GWord Int)
+countWords :: FilePath -> IO (Vector Word16)
 countWords filepath = do
     genomeHandle <- openFile filepath ReadMode
     _ <- hGetLine genomeHandle
     firstWord <- readWord 6 genomeHandle
-    gWords <- countWord firstWord empty genomeHandle
+    gWords <- countWord firstWord (Vec.replicate 4096 0) genomeHandle
     pure gWords
 
-countWord :: GWord -> Map GWord Int -> Handle -> IO (Map GWord Int)
-countWord gWord list handle = do
+countWord :: GWord -> Vector Word16 -> Handle -> IO (Vector Word16)
+countWord gWord vector handle = do
     eof <- hIsEOF handle
     if not eof then do
         symbol <- hGetChar handle
@@ -51,14 +60,14 @@ countWord gWord list handle = do
                 let newWord = (tail gWord) ++ [nucleotide]
                 countWord
                     newWord
-                    (insertWith (+) gWord 1 list)
+                    (Vec.accum (+) vector [(fromIntegral $ codeWord gWord, 1)])
                     handle
             Nothing         ->
-                countWord gWord list handle
+                countWord gWord vector handle
     else
-        pure (insertWith (+) gWord 1 list)
+        pure (Vec.accum (+) vector [(fromIntegral $ codeWord gWord, 1)])
 
 main :: IO ()
 main = do
-    word <- countWords "genome.fna"
-    print word
+    words <- countWords "genome.fna"
+    print words
