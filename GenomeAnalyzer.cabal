@@ -1,14 +1,14 @@
-name:                GenomCounter
+name:                GenomeAnalyzer
 version:             0.1.0.0
 -- synopsis:
 -- description:
-homepage:            https://github.com/githubuser/GenomCounter#readme
+homepage:            https://github.com/kemphack/GenomeAnalyzer
 license:             BSD3
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2017 Author name here
-category:            Web
+author:              Kemphag
+maintainer:          kempack@mail.ru
+copyright:           2017 Kemphag
+category:            Analysis
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
@@ -19,23 +19,25 @@ library
   build-depends:       base >= 4.7 && < 5
   default-language:    Haskell2010
 
-executable GenomCounter-exe
+executable GenomeAnalyzer-exe
   hs-source-dirs:      app
   main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , GenomCounter
+                     , containers
+                     , GenomeAnalyzer
+                     , vector
   default-language:    Haskell2010
 
-test-suite GenomCounter-test
+test-suite GenomeAnalyzer-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , GenomCounter
+                     , GenomeAnalyzer
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
 source-repository head
   type:     git
-  location: https://github.com/githubuser/GenomCounter
+  location: https://github.com/kemphack/GenomeAnalyzer

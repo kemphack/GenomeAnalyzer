@@ -1,43 +1,64 @@
 module Main where
 
-import System.IO     (IOMode(ReadMode), Handle, openFile, hGetChar, hGetLine, hIsEOF)
-import Data.Map      (Map, empty, insertWith)
+import System.IO            (IOMode(ReadMode), Handle, openFile, hGetChar, hGetLine, hIsEOF)
+import Data.Map.Strict      (Map, empty, insertWith)
 
-readWord :: Int -> Handle -> IO String
+data Nucleotide = A | C | T | G deriving (Enum, Eq, Ord, Show)
+
+type GWord = [Nucleotide]
+
+readNucleotide :: Char -> Maybe Nucleotide
+readNucleotide symbol =
+    case symbol of
+        'A' -> Just A
+        'C' -> Just C
+        'T' -> Just T
+        'G' -> Just G
+        _   -> Nothing
+
+readWord :: Int -> Handle -> IO GWord
 readWord 0         _    = pure []
-readWord charCount file = do
+readWord nuclCount file = do
     eof <- hIsEOF file
-    if eof == False then
+    if not eof then
         do
-            char <- hGetChar file
-            string <- readWord (charCount - 1) file
-            pure ([char] ++ string)
+            symbol <- hGetChar file
+            case readNucleotide symbol of
+                Just nucleotide -> do
+                    gWord <- readWord (nuclCount - 1) file
+                    pure ([nucleotide] ++ gWord)
+                Nothing -> do
+                    gWord <- readWord nuclCount file
+                    pure gWord
     else
         pure []
 
-countWords :: FilePath -> IO (Map String Int)
+countWords :: FilePath -> IO (Map GWord Int)
 countWords filepath = do
-    genomHandle <- openFile filepath ReadMode
-    _ <- hGetLine genomHandle
-    words <- countWord Nothing empty genomHandle
-    pure words
+    genomeHandle <- openFile filepath ReadMode
+    _ <- hGetLine genomeHandle
+    firstWord <- readWord 6 genomeHandle
+    gWords <- countWord firstWord empty genomeHandle
+    pure gWords
 
-countWord :: Maybe String -> Map String Int -> Handle -> IO (Map String Int)
-countWord Nothing _ handle = do
-    firstWord <- readWord 6 handle
-    countWord (Just firstWord) (insertWith (+) firstWord 1 empty) handle
-countWord (Just word) list handle = do
+countWord :: GWord -> Map GWord Int -> Handle -> IO (Map GWord Int)
+countWord gWord list handle = do
     eof <- hIsEOF handle
     if not eof then do
-        nucleotide <- hGetChar handle
-        let newWord = (tail word) ++ [nucleotide]
-        countWord
-            (Just newWord)
-            (insertWith (+) newWord 1 list)
-            handle
+        symbol <- hGetChar handle
+        case readNucleotide symbol of
+            Just nucleotide -> do
+                let newWord = (tail gWord) ++ [nucleotide]
+                countWord
+                    newWord
+                    (insertWith (+) gWord 1 list)
+                    handle
+            Nothing         ->
+                countWord gWord list handle
     else
-        pure list
+        pure (insertWith (+) gWord 1 list)
+
 main :: IO ()
 main = do
-    words <- countWords "genom.fna"
-    print words
+    word <- countWords "genome.fna"
+    print word
