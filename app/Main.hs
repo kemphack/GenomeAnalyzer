@@ -6,7 +6,7 @@ import Data.Vector.Unboxed  (Vector(..))
 import qualified Data.Vector.Unboxed as Vec
 import Data.Word            (Word16(..))
 
-data Nucleotide = A | C | T | G deriving (Enum, Eq, Ord, Show)
+data Nucleotide = A | C | T | G deriving (Enum, Eq, Ord, Read, Show)
 
 type GWord = [Nucleotide]
 
@@ -15,15 +15,6 @@ codeWord gWord = fromIntegral (sum [4^i * (fromEnum nuc) | (i, nuc) <- zip [0..]
 
 decodeWord :: Word16 -> GWord
 decodeWord word = [toEnum (fromIntegral((div word (4^i)) `mod` 4)) | i <- [0..5]]
-
-readNucleotide :: Char -> Maybe Nucleotide
-readNucleotide symbol =
-    case symbol of
-        'A' -> Just A
-        'C' -> Just C
-        'T' -> Just T
-        'G' -> Just G
-        _   -> Nothing
 
 readWord :: Int -> Handle -> IO GWord
 readWord 0         _    = pure []
@@ -55,7 +46,7 @@ countWord gWord vector handle = do
     eof <- hIsEOF handle
     if not eof then do
         symbol <- hGetChar handle
-        case readNucleotide symbol of
+        case readMaybe symbol of
             Just nucleotide -> do
                 let newWord = (tail gWord) ++ [nucleotide]
                 countWord
